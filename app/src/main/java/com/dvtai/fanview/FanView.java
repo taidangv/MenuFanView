@@ -3,7 +3,6 @@ package com.dvtai.fanview;
 import android.content.Context;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,10 +23,10 @@ public class FanView extends FrameLayout {
 
 	private static final String TAG = "FanView";
 
-	private static final int MAX_ITEM = 10;
-	private static final float MAX_ANGLE_ITEM = 25;
-	private static final float MAX_ANGLE = 90F;
-	private static final float MIN_ANGLE = 0F;
+	private static final int MAX_ITEM_COUNT = 20;
+	private static final float ANGLE_ITEM_MAX = 15;
+	private static final float ANGLE_MENU_MAX = 90F;
+	private static final float ANGLE_MENU_MIN = 0F;
 
 	enum Direction {
 		OPEN,
@@ -75,7 +74,7 @@ public class FanView extends FrameLayout {
 
 	private void prepareItems() {
 		mListItem = new ArrayList<>();
-		for (int i = 0; i < MAX_ITEM; i++) {
+		for (int i = 0; i < MAX_ITEM_COUNT; i++) {
 			// create item view, layout param
 			ViewGroup itemView = (ViewGroup) layoutInflater.inflate(R.layout.item_fan, null);
 			LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -97,10 +96,10 @@ public class FanView extends FrameLayout {
 
 	private void prepareAngles() {
 		mListAngle = new ArrayList<>();
-		for (int i = 0; i < MAX_ITEM; i++) {
+		for (int i = 0; i < MAX_ITEM_COUNT; i++) {
 			Angle angle = new Angle();
 			angle.value = 0;
-			angle.maxSelf = Math.min(MAX_ANGLE, i * MAX_ANGLE_ITEM);
+			angle.maxSelf = Math.min(ANGLE_MENU_MAX, i * ANGLE_ITEM_MAX);
 			mListAngle.add(angle);
 		}
 	}
@@ -114,7 +113,6 @@ public class FanView extends FrameLayout {
 	private void resolveAngleForItems(float deltaAngle, Direction direction) {
 		int size = mListAngle.size();
 		if (direction == Direction.OPEN) {
-			Log.w(TAG, "Direction.OPEN-----------------------------");
 			for (int i = size - 1; i >= 1; i--) {
 				Angle a = mListAngle.get(i);
 				if (a.isMax()) continue; // no need to resolve angle for this item
@@ -124,11 +122,11 @@ public class FanView extends FrameLayout {
 					if (mListAngle.get(i + 1).isMax()) {
 						a.value = Math.min(a.maxSelf, a.value + deltaAngle);
 					} else {
-						a.value = Math.max(MIN_ANGLE, mListAngle.get(i + 1).value - MAX_ANGLE_ITEM);
+						a.value = Math.max(ANGLE_MENU_MIN, mListAngle.get(i + 1).value - ANGLE_ITEM_MAX);
 					}
 				}
 			}
-			Log.w(TAG, "Direction.OPEN deltaAngle=" + deltaAngle + getLog());
+			//Log.w(TAG, "Direction.OPEN deltaAngle=" + deltaAngle + getLog());
 
 		} else {
 			for (int i = 1; i < size; i++) {
@@ -136,17 +134,17 @@ public class FanView extends FrameLayout {
 				Angle prev = mListAngle.get(i - 1);
 				if (a.isMin()) continue;
 
-				if (a.value < MAX_ANGLE) {
-					a.value = Math.max(MIN_ANGLE, a.value + deltaAngle);
+				if (a.value < ANGLE_MENU_MAX) {
+					a.value = Math.max(ANGLE_MENU_MIN, a.value + deltaAngle);
 				} else {
-					if (prev.value + MAX_ANGLE_ITEM < MAX_ANGLE) {
-						a.value = prev.value + MAX_ANGLE_ITEM;
+					if (prev.value + ANGLE_ITEM_MAX < ANGLE_MENU_MAX) {
+						a.value = prev.value + ANGLE_ITEM_MAX;
 					} else {
 						break;
 					}
 				}
 			}
-			Log.w(TAG, "Direction.CLOSE deltaAngle=" + deltaAngle + getLog());
+			//Log.w(TAG, "Direction.CLOSE deltaAngle=" + deltaAngle + getLog());
 		}
 
 		render();
@@ -167,8 +165,8 @@ public class FanView extends FrameLayout {
 
 		@Override
 		public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-			Log.d(TAG, String.format("onScroll: (%f/%f) - (%f/%f) - distanceX:%f - distanceY:%f",
-					e1.getX(), e1.getY(), e2.getX(), e2.getY(), distanceX, distanceY));
+			//Log.d(TAG, String.format("onScroll: (%f/%f) - (%f/%f) - distanceX:%f - distanceY:%f",
+			//		e1.getX(), e1.getY(), e2.getX(), e2.getY(), distanceX, distanceY));
 			float deltaAngle = calculateAngle(lastX, lastY) - calculateAngle(e2.getX(), e2.getY());
 
 			Direction direction = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
@@ -204,7 +202,7 @@ public class FanView extends FrameLayout {
 			double revertY = getHeight() - y;
 			double rad = Math.atan(revertY / revertX);
 			float angle = (float) (rad * (180 / Math.PI));
-			Log.d(TAG, "calculateAngle: Rx=" + revertX + " Ry=" + revertY + " angle=" + angle);
+			//Log.d(TAG, "calculateAngle: Rx=" + revertX + " Ry=" + revertY + " angle=" + angle);
 			return angle;
 		}
 	};
@@ -218,15 +216,15 @@ public class FanView extends FrameLayout {
 		}
 
 		boolean isMin() {
-			return value == MIN_ANGLE;
+			return value == ANGLE_MENU_MIN;
 		}
 	}
 
-	private String getLog() {
-		String str = "";
-		for (int i = 0; i < mListAngle.size(); i++) {
-			str += String.format(" %d-%d", i, (int) mListAngle.get(i).value);
-		}
-		return str;
-	}
+//	private String getLog() {
+//		String str = "";
+//		for (int i = 0; i < mListAngle.size(); i++) {
+//			str += String.format(" %d-%d", i, (int) mListAngle.get(i).value);
+//		}
+//		return str;
+//	}
 }
