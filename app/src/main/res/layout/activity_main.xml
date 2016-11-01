@@ -12,6 +12,6 @@
 
     <com.dvtai.fanview.FanView
         android:layout_width="@dimen/fan_menu_size"
-        android:layout_height="@dimen/fan_menu_size"
+        android:layout_height="match_parent"
         android:background="#DDDDDD"/>
 </FrameLayout>

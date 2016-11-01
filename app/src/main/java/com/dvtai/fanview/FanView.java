@@ -40,15 +40,17 @@ public class FanView extends FrameLayout {
 		}
 
 		boolean isMin() {
-			return degree == ANGLE_MASTER_MIN;
+			return degree == MASTER_ANGLE_MIN;
 		}
 	}
 
 	private static final String TAG = "FanView";
+	private static final String TAG_ANGLE = "TDAngle";
+
 	private static final int ITEM_COUNT = 20;
-	private static final float ANGLE_ITEM = 12;
-	private static final float ANGLE_MASTER_MAX = 90F;
-	private static final float ANGLE_MASTER_MIN = 0F;
+	private static final float ITEM_ANGLE = 12;
+	private static final float MASTER_ANGLE_MAX = 90F;
+	private static final float MASTER_ANGLE_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
 	private List<Angle> mListAngle;
@@ -125,7 +127,7 @@ public class FanView extends FrameLayout {
 		for (int i = 0; i < ITEM_COUNT; i++) {
 			Angle angle = new Angle();
 			angle.degree = 0;
-			angle.maxSelf = Math.min(ANGLE_MASTER_MAX, i * ANGLE_ITEM);
+			angle.maxSelf = Math.min(MASTER_ANGLE_MAX, i * ITEM_ANGLE);
 			mListAngle.add(angle);
 		}
 	}
@@ -149,7 +151,7 @@ public class FanView extends FrameLayout {
 					if (mListAngle.get(i + 1).isMax()) {
 						me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
 					} else {
-						me.degree = Math.max(ANGLE_MASTER_MIN, mListAngle.get(i + 1).degree - ANGLE_ITEM);
+						me.degree = Math.max(MASTER_ANGLE_MIN, mListAngle.get(i + 1).degree - ITEM_ANGLE);
 					}
 				}
 			}
@@ -159,11 +161,11 @@ public class FanView extends FrameLayout {
 				Angle prev = mListAngle.get(i - 1);
 				if (me.isMin()) continue;
 
-				if (me.degree < ANGLE_MASTER_MAX) {
-					me.degree = Math.max(ANGLE_MASTER_MIN, me.degree + deltaAngle);
+				if (me.degree < MASTER_ANGLE_MAX) {
+					me.degree = Math.max(MASTER_ANGLE_MIN, me.degree + deltaAngle);
 				} else {
-					if (prev.degree + ANGLE_ITEM < ANGLE_MASTER_MAX) {
-						me.degree = prev.degree + ANGLE_ITEM;
+					if (prev.degree + ITEM_ANGLE < MASTER_ANGLE_MAX) {
+						me.degree = prev.degree + ITEM_ANGLE;
 					} else {
 						break;
 					}
@@ -180,7 +182,7 @@ public class FanView extends FrameLayout {
 		}
 		double rad = Math.atan(reverseY / reverseX);
 		float degree = (float) (rad * (180 / Math.PI));
-		Log.w(TAG, "calculateAngleDegree: " + degree);
+		//Log.w(TAG_ANGLE, "calculateAngleDegree: " + degree);
 		return degree;
 	}
 
@@ -201,7 +203,10 @@ public class FanView extends FrameLayout {
 			Log.w(TAG, String.format("GestureDetector.onScroll: (%d/%d) - (%d/%d) - distanceX:%d - distanceY:%d",
 					(int) e1.getX(), (int) e1.getY(), (int) e2.getX(), (int) e2.getY(), (int) distanceX, (int) distanceY));
 			// calculate angle degree
-			float deltaDegree = calculateAngleDegree(mLastX, mLastY) - calculateAngleDegree(e2.getX(), e2.getY());
+			float last = calculateAngleDegree(mLastX, mLastY);
+			float now = calculateAngleDegree(e2.getX(), e2.getY());
+			float deltaDegree = last - now;
+			Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
 			mCurrentDirection = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
 			mLastX = e2.getX();
 			mLastY = e2.getY();
