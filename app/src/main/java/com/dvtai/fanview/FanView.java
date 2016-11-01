@@ -141,7 +141,6 @@ public class FanView extends FrameLayout {
 				Angle a = mListAngle.get(i);
 				if (a.value == MIN_ANGLE || a.value + deltaAngle <= MIN_ANGLE) {
 					a.value = MIN_ANGLE;
-					continue;
 				} else {
 					a.value = a.value + deltaAngle;
 				}
