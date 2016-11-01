@@ -133,11 +133,17 @@ public class FanView extends FrameLayout {
 		} else {
 			for (int i = 1; i < size; i++) {
 				Angle a = mListAngle.get(i);
+				Angle prev = mListAngle.get(i - 1);
 				if (a.isMin()) continue;
 
-				a.value = Math.max(MIN_ANGLE, a.value + deltaAngle);
-				if (MAX_ANGLE - a.value <= MAX_ANGLE_ITEM) {
-					break;
+				if (a.value < MAX_ANGLE) {
+					a.value = Math.max(MIN_ANGLE, a.value + deltaAngle);
+				} else {
+					if (prev.value + MAX_ANGLE_ITEM < MAX_ANGLE) {
+						a.value = prev.value + MAX_ANGLE_ITEM;
+					} else {
+						break;
+					}
 				}
 			}
 			Log.w(TAG, "Direction.CLOSE deltaAngle=" + deltaAngle + getLog());
