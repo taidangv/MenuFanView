@@ -24,7 +24,7 @@ public class FanView extends FrameLayout {
 
 	private static final String TAG = "FanView";
 
-	private static final int MAX_ITEM = 7;
+	private static final int MAX_ITEM = 10;
 	private static final float MAX_ANGLE_ITEM = 25;
 	private static final float MAX_ANGLE = 90F;
 	private static final float MIN_ANGLE = 0F;
@@ -119,18 +119,14 @@ public class FanView extends FrameLayout {
 			Log.w(TAG, "Direction.OPEN-----------------------------");
 			for (int i = size - 1; i >= 1; i--) {
 				Angle a = mListAngle.get(i);
-				if (a.isMaxReached()) continue; // no need to resolve angle for this item
+				if (a.isMax()) continue; // no need to resolve angle for this item
 
-				a.value = a.value + deltaAngle;
-				if (a.isMaxReached()) {
-					a.setToMax();
-				} else {
-					if (i + 1 < size) {
-						if (mListAngle.get(i + 1).isMaxReached()) {
-							a.value = a.value + deltaAngle;
-						} else {
-							a.value = mListAngle.get(i + 1).value - MAX_ANGLE_ITEM;
-						}
+				a.value = Math.min(a.maxSelf, a.value + deltaAngle);
+				if (!a.isMax() && i + 1 < size) {
+					if (mListAngle.get(i + 1).isMax()) {
+						a.value = Math.min(a.maxSelf, a.value + deltaAngle);
+					} else {
+						a.value = Math.max(MIN_ANGLE, mListAngle.get(i + 1).value - MAX_ANGLE_ITEM);
 					}
 				}
 				Log.w(TAG, String.format("Direction.OPEN: i=%d value=%f", i, a.value));
@@ -139,15 +135,13 @@ public class FanView extends FrameLayout {
 			Log.w(TAG, "Direction.CLOSE-----------------------------");
 			for (int i = 1; i < size; i++) {
 				Angle a = mListAngle.get(i);
-				if (a.value == MIN_ANGLE || a.value + deltaAngle <= MIN_ANGLE) {
-					a.value = MIN_ANGLE;
-				} else {
-					a.value = a.value + deltaAngle;
-				}
+				if (a.isMin()) continue;
 
-				if (a.value > MAX_ANGLE - MAX_ANGLE_ITEM) {
+				a.value = Math.max(MIN_ANGLE, a.value + deltaAngle);
+				if (MAX_ANGLE - a.value <= MAX_ANGLE_ITEM) {
 					break;
 				}
+
 				Log.w(TAG, String.format("Direction.CLOSE: i=%d value=%f", i, a.value));
 			}
 		}
@@ -216,12 +210,12 @@ public class FanView extends FrameLayout {
 		float value;
 		float maxSelf;
 
-		public boolean isMaxReached() {
+		boolean isMax() {
 			return value >= maxSelf;
 		}
 
-		public void setToMax() {
-			value = maxSelf;
+		boolean isMin() {
+			return value == MIN_ANGLE;
 		}
 	}
 }
