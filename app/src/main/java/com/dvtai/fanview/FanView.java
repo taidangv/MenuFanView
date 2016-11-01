@@ -112,8 +112,6 @@ public class FanView extends FrameLayout {
 	}
 
 	private void resolveAngleForItems(float deltaAngle, Direction direction) {
-		//Log.d(TAG, "Delta:" + deltaAngle + " Direction:" + ((direction == Direction.OPEN) ? "Open" : "Close"));
-
 		int size = mListAngle.size();
 		if (direction == Direction.OPEN) {
 			Log.w(TAG, "Direction.OPEN-----------------------------");
@@ -129,10 +127,10 @@ public class FanView extends FrameLayout {
 						a.value = Math.max(MIN_ANGLE, mListAngle.get(i + 1).value - MAX_ANGLE_ITEM);
 					}
 				}
-				Log.w(TAG, String.format("Direction.OPEN: i=%d value=%f", i, a.value));
 			}
+			Log.w(TAG, "Direction.OPEN deltaAngle=" + deltaAngle + getLog());
+
 		} else {
-			Log.w(TAG, "Direction.CLOSE-----------------------------");
 			for (int i = 1; i < size; i++) {
 				Angle a = mListAngle.get(i);
 				if (a.isMin()) continue;
@@ -141,9 +139,8 @@ public class FanView extends FrameLayout {
 				if (MAX_ANGLE - a.value <= MAX_ANGLE_ITEM) {
 					break;
 				}
-
-				Log.w(TAG, String.format("Direction.CLOSE: i=%d value=%f", i, a.value));
 			}
+			Log.w(TAG, "Direction.CLOSE deltaAngle=" + deltaAngle + getLog());
 		}
 
 		render();
@@ -217,5 +214,13 @@ public class FanView extends FrameLayout {
 		boolean isMin() {
 			return value == MIN_ANGLE;
 		}
+	}
+
+	private String getLog() {
+		String str = "";
+		for (int i = 0; i < mListAngle.size(); i++) {
+			str += String.format(" %d-%d", i, (int) mListAngle.get(i).value);
+		}
+		return str;
 	}
 }
