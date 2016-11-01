@@ -159,16 +159,14 @@ public class FanView extends FrameLayout {
 			for (int i = 1; i < size; i++) {
 				Angle me = mListAngle.get(i);
 				Angle prev = mListAngle.get(i - 1);
-				if (me.isMin()) continue;
 
+				if (me.isMin()) continue;
 				if (me.degree < MASTER_ANGLE_MAX) {
 					me.degree = Math.max(MASTER_ANGLE_MIN, me.degree + deltaAngle);
+				} else if (prev.degree + ITEM_ANGLE < MASTER_ANGLE_MAX) {
+					me.degree = prev.degree + ITEM_ANGLE;
 				} else {
-					if (prev.degree + ITEM_ANGLE < MASTER_ANGLE_MAX) {
-						me.degree = prev.degree + ITEM_ANGLE;
-					} else {
-						break;
-					}
+					break;
 				}
 			}
 		}
