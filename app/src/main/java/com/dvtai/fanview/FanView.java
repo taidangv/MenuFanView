@@ -144,16 +144,26 @@ public class FanView extends FrameLayout {
 		if (direction == Direction.OPEN) {
 			for (int i = size - 1; i >= 1; i--) {
 				Angle me = mListAngle.get(i);
-				if (me.isMax()) continue;
+				Angle prev = (i <= size - 2) ? mListAngle.get(i + 1) : null;
 
-				me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
-				if (!me.isMax() && i + 1 < size) {
-					if (mListAngle.get(i + 1).isMax()) {
-						me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
-					} else {
-						me.degree = Math.max(MASTER_ANGLE_MIN, mListAngle.get(i + 1).degree - ITEM_ANGLE);
-					}
+				if (me.isMax()) continue;
+				if (prev == null || prev.isMax()) {
+					me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
+				} else if (!prev.isMax() && prev.degree > ITEM_ANGLE) {
+					me.degree = prev.degree - ITEM_ANGLE;
+				} else {
+					break;
 				}
+
+//				me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
+//				if (!me.isMax() && i + 1 < size) {
+//					if (mListAngle.get(i + 1).isMax()) {
+//						me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
+//					} else {
+//						me.degree = Math.max(MASTER_ANGLE_MIN, mListAngle.get(i + 1).degree - ITEM_ANGLE);
+//					}
+//				}
+
 			}
 		} else {
 			for (int i = 1; i < size; i++) {
