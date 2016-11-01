@@ -25,32 +25,44 @@ import java.util.List;
 
 public class FanView extends FrameLayout {
 
-	private static final String TAG = "FanView";
-
-	private static final int MAX_ITEM_COUNT = 17;
-	private static final float ANGLE_ITEM_MAX = 15;
-	private static final float ANGLE_MENU_MAX = 90F;
-	private static final float ANGLE_MENU_MIN = 0F;
-
-	enum Direction {
+	private enum Direction {
 		OPEN,
 		CLOSE,
 		UNSPECIFIED
 	}
+
+	private static class Angle {
+		float degree;
+		float maxSelf;
+
+		boolean isMax() {
+			return degree >= maxSelf;
+		}
+
+		boolean isMin() {
+			return degree == ANGLE_MASTER_MIN;
+		}
+	}
+
+	private static final String TAG = "FanView";
+	private static final int ITEM_COUNT = 20;
+	private static final float ANGLE_ITEM = 12;
+	private static final float ANGLE_MASTER_MAX = 90F;
+	private static final float ANGLE_MASTER_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
 	private List<Angle> mListAngle;
 	private int mItemWidth = getResources().getDimensionPixelSize(R.dimen.fan_menu_size);
 	private int mItemHeight = getResources().getDimensionPixelSize(R.dimen.fan_menu_item_height);
 
-	private LayoutInflater layoutInflater;
-	private GestureDetectorCompat gestureDetector;
-	private Scroller flingScroller;
-	private ValueAnimator flingAnimator;
-	private Direction currentDirection = Direction.UNSPECIFIED;
+	private LayoutInflater mLayoutInflater;
+	private GestureDetectorCompat mGestureDetector;
+	private Scroller mFlingScroller;
+	private ValueAnimator mFlingAnimator;
 
-	private float lastX;
-	private float lastY;
+	private Direction mCurrentDirection = Direction.UNSPECIFIED;
+	private float mLastX;
+	private float mLastY;
 
 	public FanView(Context context) {
 		this(context, null);
@@ -66,31 +78,31 @@ public class FanView extends FrameLayout {
 	}
 
 	private void init() {
-		layoutInflater = LayoutInflater.from(getContext());
-		gestureDetector = new GestureDetectorCompat(getContext(), gestureListener);
-		flingScroller = new Scroller(getContext());
-		flingAnimator = new ValueAnimator();
-		flingAnimator.addUpdateListener(flingAnimatorUpdateListener);
+		mLayoutInflater = LayoutInflater.from(getContext());
+		mGestureDetector = new GestureDetectorCompat(getContext(), gestureListener);
+		mFlingScroller = new Scroller(getContext());
+		mFlingAnimator = new ValueAnimator();
+		mFlingAnimator.addUpdateListener(flingAnimatorUpdateListener);
 		addItems();
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		return gestureDetector.onTouchEvent(event);
+		return mGestureDetector.onTouchEvent(event);
 	}
 
 	private void addItems() {
 		removeAllViews();
 		prepareItems();
 		prepareAngles();
-		render();
+		renderItems();
 	}
 
 	private void prepareItems() {
 		mListItem = new ArrayList<>();
-		for (int i = 0; i < MAX_ITEM_COUNT; i++) {
+		for (int i = 0; i < ITEM_COUNT; i++) {
 			// create item view, layout param
-			ViewGroup itemView = (ViewGroup) layoutInflater.inflate(R.layout.item_fan, null);
+			ViewGroup itemView = (ViewGroup) mLayoutInflater.inflate(R.layout.item_fan, null);
 			LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 			lp.gravity = Gravity.RIGHT | Gravity.BOTTOM;
 			lp.width = mItemWidth;
@@ -110,17 +122,18 @@ public class FanView extends FrameLayout {
 
 	private void prepareAngles() {
 		mListAngle = new ArrayList<>();
-		for (int i = 0; i < MAX_ITEM_COUNT; i++) {
+		for (int i = 0; i < ITEM_COUNT; i++) {
 			Angle angle = new Angle();
-			angle.value = 0;
-			angle.maxSelf = Math.min(ANGLE_MENU_MAX, i * ANGLE_ITEM_MAX);
+			angle.degree = 0;
+			angle.maxSelf = Math.min(ANGLE_MASTER_MAX, i * ANGLE_ITEM);
 			mListAngle.add(angle);
 		}
 	}
 
-	private void render() {
+	private void renderItems() {
 		for (int i = 0; i < mListItem.size(); i++) {
-			mListItem.get(i).setRotation(mListAngle.get(i).value);
+			float degree = mListAngle.get(i).degree;
+			mListItem.get(i).setRotation(degree);
 		}
 	}
 
@@ -128,133 +141,111 @@ public class FanView extends FrameLayout {
 		int size = mListAngle.size();
 		if (direction == Direction.OPEN) {
 			for (int i = size - 1; i >= 1; i--) {
-				Angle a = mListAngle.get(i);
-				if (a.isMax()) continue; // no need to resolve angle for this item
+				Angle me = mListAngle.get(i);
+				if (me.isMax()) continue;
 
-				a.value = Math.min(a.maxSelf, a.value + deltaAngle);
-				if (!a.isMax() && i + 1 < size) {
+				me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
+				if (!me.isMax() && i + 1 < size) {
 					if (mListAngle.get(i + 1).isMax()) {
-						a.value = Math.min(a.maxSelf, a.value + deltaAngle);
+						me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
 					} else {
-						a.value = Math.max(ANGLE_MENU_MIN, mListAngle.get(i + 1).value - ANGLE_ITEM_MAX);
+						me.degree = Math.max(ANGLE_MASTER_MIN, mListAngle.get(i + 1).degree - ANGLE_ITEM);
 					}
 				}
 			}
-			//Log.w(TAG, "Direction.OPEN deltaAngle=" + deltaAngle + getLog());
-
 		} else {
 			for (int i = 1; i < size; i++) {
-				Angle a = mListAngle.get(i);
+				Angle me = mListAngle.get(i);
 				Angle prev = mListAngle.get(i - 1);
-				if (a.isMin()) continue;
+				if (me.isMin()) continue;
 
-				if (a.value < ANGLE_MENU_MAX) {
-					a.value = Math.max(ANGLE_MENU_MIN, a.value + deltaAngle);
+				if (me.degree < ANGLE_MASTER_MAX) {
+					me.degree = Math.max(ANGLE_MASTER_MIN, me.degree + deltaAngle);
 				} else {
-					if (prev.value + ANGLE_ITEM_MAX < ANGLE_MENU_MAX) {
-						a.value = prev.value + ANGLE_ITEM_MAX;
+					if (prev.degree + ANGLE_ITEM < ANGLE_MASTER_MAX) {
+						me.degree = prev.degree + ANGLE_ITEM;
 					} else {
 						break;
 					}
 				}
 			}
-			//Log.w(TAG, "Direction.CLOSE deltaAngle=" + deltaAngle + getLog());
 		}
-
-		render();
 	}
+
+	private float calculateAngleDegree(double x, double y) {
+		double reverseX = getWidth() - x;
+		double reverseY = getHeight() - y;
+		if (reverseX == 0) {
+			return 90;
+		}
+		double rad = Math.atan(reverseY / reverseX);
+		float degree = (float) (rad * (180 / Math.PI));
+		Log.w(TAG, "calculateAngleDegree: " + degree);
+		return degree;
+	}
+
 
 	private GestureDetector.OnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			if (flingAnimator.isRunning()) {
-				flingAnimator.cancel();
-			}
-			lastX = e.getX();
-			lastY = e.getY();
-			Log.e(TAG, "onDown: x:" + lastX + " y:" + lastY);
+			Log.w(TAG, String.format("GestureDetector.onDown: X:%d Y:%d", (int) e.getX(), (int) e.getY()));
+			if (mFlingAnimator.isRunning()) mFlingAnimator.cancel();
+			mLastX = e.getX();
+			mLastY = e.getY();
 			return true;
 		}
 
 		@Override
 		public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-			Log.d(TAG, String.format("onScroll: (%d/%d) - (%d/%d) - distanceX:%d - distanceY:%d", (int) e1.getX(), (int) e1.getY(), (int) e2.getX(), (int) e2.getY(), (int) distanceX, (int) distanceY));
-			float deltaAngle = calculateAngle(lastX, lastY) - calculateAngle(e2.getX(), e2.getY());
-
-			currentDirection = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
-			resolveAngleForItems(deltaAngle * -1, currentDirection);
-
-			lastX = e2.getX();
-			lastY = e2.getY();
+			Log.w(TAG, String.format("GestureDetector.onScroll: (%d/%d) - (%d/%d) - distanceX:%d - distanceY:%d",
+					(int) e1.getX(), (int) e1.getY(), (int) e2.getX(), (int) e2.getY(), (int) distanceX, (int) distanceY));
+			// calculate angle degree
+			float deltaDegree = calculateAngleDegree(mLastX, mLastY) - calculateAngleDegree(e2.getX(), e2.getY());
+			mCurrentDirection = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
+			mLastX = e2.getX();
+			mLastY = e2.getY();
+			// resolve items
+			resolveAngleForItems(deltaDegree * -1, mCurrentDirection);
+			renderItems();
 			return false;
 		}
 
 		@Override
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-			flingScroller.fling((int) e1.getX(), (int) e1.getY(), (int) velocityX, (int) velocityY, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
-			Log.e(TAG, String.format("X:%d, Y:%d, finalX:%d, finalY:%d, velocity:%f, duration:%d", flingScroller.getCurrX(), flingScroller.getCurrY(), flingScroller.getFinalX(), flingScroller.getFinalY(), flingScroller.getCurrVelocity(), flingScroller.getDuration()));
-			flingAnimator.setIntValues(flingScroller.getCurrY(), flingScroller.getFinalY());
-			lastX = flingScroller.getStartX();
-			lastY = flingScroller.getStartY();
-			flingAnimator.setDuration(flingScroller.getDuration());
-			flingAnimator.setInterpolator(new TimeInterpolator() {
-						@Override
-						public float getInterpolation(float input) {
-							return (flingScroller.timePassed() * 1.0F) / flingScroller.getDuration();
-						}
-					});
-			flingAnimator.start();
+			// scroller
+			mFlingScroller.fling((int) e1.getX(), (int) e1.getY(), (int) velocityX, (int) velocityY,
+					Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			mLastX = mFlingScroller.getStartX();
+			mLastY = mFlingScroller.getStartY();
+			// start value animation
+			mFlingAnimator.setIntValues(mFlingScroller.getCurrY(), mFlingScroller.getFinalY());
+			mFlingAnimator.setDuration(mFlingScroller.getDuration());
+			mFlingAnimator.setInterpolator(new TimeInterpolator() {
+				@Override
+				public float getInterpolation(float input) {
+					return (mFlingScroller.timePassed() * 1.0F) / mFlingScroller.getDuration();
+				}
+			});
+			mFlingAnimator.start();
 			return true;
 		}
-
-
 	};
+
 
 	private ValueAnimator.AnimatorUpdateListener flingAnimatorUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
 		@Override
 		public void onAnimationUpdate(ValueAnimator animation) {
-			//Log.e(TAG, "value: " + animation.getAnimatedValue());
-			if (flingScroller.computeScrollOffset()) {
-				Log.e(TAG, String.format("X:%d, Y:%d", flingScroller.getCurrX(), flingScroller.getCurrY()));
-				float deltaAngle = calculateAngle(lastX, lastY) - calculateAngle(flingScroller.getCurrX(), flingScroller.getCurrY());
-				resolveAngleForItems(deltaAngle * -2, currentDirection);
-				lastX = flingScroller.getCurrX();
-				lastY = flingScroller.getCurrY();
+			if (mFlingScroller.computeScrollOffset()) {
+				// calculate angle degree
+				float deltaDegree = calculateAngleDegree(mLastX, mLastY) - calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
+				mLastX = mFlingScroller.getCurrX();
+				mLastY = mFlingScroller.getCurrY();
+				// resolve items
+				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - Angle:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaDegree));
+				resolveAngleForItems(deltaDegree * -2, mCurrentDirection);
+				renderItems();
 			}
 		}
 	};
-
-	private float calculateAngle(double x, double y) {
-		double revertX = getWidth() - x;
-		double revertY = getHeight() - y;
-		if (revertX == 0) {
-			return 90;
-		}
-		double rad = Math.atan(revertY / revertX);
-		float angle = (float) (rad * (180 / Math.PI));
-		//Log.d(TAG, "calculateAngle: Rx=" + revertX + " Ry=" + revertY + " angle=" + angle);
-		return angle;
-	}
-
-	private static class Angle {
-		float value;
-		float maxSelf;
-
-		boolean isMax() {
-			return value >= maxSelf;
-		}
-
-		boolean isMin() {
-			return value == ANGLE_MENU_MIN;
-		}
-	}
-
-//	private String getLog() {
-//		String str = "";
-//		for (int i = 0; i < mListAngle.size(); i++) {
-//			str += String.format(" %d-%d", i, (int) mListAngle.get(i).value);
-//		}
-//		return str;
-//	}
 }
