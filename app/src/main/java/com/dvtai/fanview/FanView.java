@@ -8,13 +8,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.FrameLayout;
 import android.widget.Scroller;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +39,6 @@ public class FanView extends FrameLayout {
 	private static final String TAG = "FanView";
 	private static final String TAG_DEV = "Dev";
 
-	private static final int ITEM_COUNT = 20;
 	private static final float ITEM_ANGLE = 12;
 	private static final float MASTER_ANGLE_MAX = 180F;
 	private static final float MASTER_ANGLE_MIN = 0F;
@@ -51,10 +48,10 @@ public class FanView extends FrameLayout {
 	private int mItemWidth = getResources().getDimensionPixelSize(R.dimen.fan_menu_size);
 	private int mItemHeight = getResources().getDimensionPixelSize(R.dimen.fan_menu_item_height);
 
-	private LayoutInflater mLayoutInflater;
 	private GestureDetectorCompat mGestureDetector;
 	private Scroller mFlingScroller;
 	private ValueAnimator mFlingAnimator;
+	private Adapter mAdapter;
 
 	private float mLastX;
 	private float mLastY;
@@ -73,7 +70,6 @@ public class FanView extends FrameLayout {
 	}
 
 	private void init() {
-		mLayoutInflater = LayoutInflater.from(getContext());
 		mGestureDetector = new GestureDetectorCompat(getContext(), gestureListener);
 		mFlingScroller = new Scroller(getContext());
 		mFlingAnimator = new ValueAnimator();
@@ -88,37 +84,42 @@ public class FanView extends FrameLayout {
 
 	private void addItems() {
 		removeAllViews();
-		prepareItems();
+		setAdapter(null);
+	}
+
+	public void setAdapter(Adapter adapter) {
+		mAdapter = adapter;
+		populateItems();
 		prepareAngles();
 		renderItems();
 	}
 
-	private void prepareItems() {
-		mListItem = new ArrayList<>();
-		for (int i = 0; i < ITEM_COUNT; i++) {
-			// create item view, layout param
-			ViewGroup itemView = (ViewGroup) mLayoutInflater.inflate(R.layout.item_fan, null);
+	public void populateItems() {
+		removeAllViews();
+		if (mAdapter == null) return;
+
+		int count = mAdapter.getCount();
+		for (int i = 0; i < count; i++) {
+			View itemView = mAdapter.getView(i, null, this);
 			LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 			lp.gravity = Gravity.RIGHT | Gravity.BOTTOM;
 			lp.width = mItemWidth;
 			lp.height = mItemHeight;
-			lp.rightMargin = 80;
 			itemView.setLayoutParams(lp);
+
 			// set pivot
 			itemView.setPivotX(mItemWidth - (float) mItemHeight / 2);
 			itemView.setPivotY((float) mItemHeight / 2);
-			mListItem.add(itemView);
-			// set some data
-			TextView tv = (TextView) itemView.findViewById(R.id.tv_name);
-			tv.setText((i + 1) + " - HOLLY FUCKING SHIT");
 
+			mListItem.add(itemView);
 			addView(itemView, 0);
 		}
 	}
 
 	private void prepareAngles() {
 		mListAngle = new ArrayList<>();
-		for (int i = 0; i < ITEM_COUNT; i++) {
+		if (mAdapter == null) return;
+		for (int i = 0; i < mAdapter.getCount(); i++) {
 			Angle angle = new Angle();
 			angle.degree = 0;
 			angle.maxSelf = Math.min(MASTER_ANGLE_MAX, i * ITEM_ANGLE);
