@@ -250,8 +250,7 @@ public class FanView extends FrameLayout {
 				mLastX = mFlingScroller.getCurrX();
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
-				//Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - Angle:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaDegree));
-				//Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
+				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - deltaArc:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaArc));
 				resolveAngleForItems(deltaArc, mCurrentDirection);
 				renderItems();
 			}
