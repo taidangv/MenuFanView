@@ -154,16 +154,6 @@ public class FanView extends FrameLayout {
 				} else {
 					break;
 				}
-
-//				me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
-//				if (!me.isMax() && i + 1 < size) {
-//					if (mListAngle.get(i + 1).isMax()) {
-//						me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
-//					} else {
-//						me.degree = Math.max(MASTER_ANGLE_MIN, mListAngle.get(i + 1).degree - ITEM_ANGLE);
-//					}
-//				}
-
 			}
 		} else {
 			for (int i = 1; i < size; i++) {
@@ -183,15 +173,19 @@ public class FanView extends FrameLayout {
 	}
 
 	private float calculateAngleDegree(double x, double y) {
-		double reverseX = getWidth() - x;
-		double reverseY = getHeight() - y;
-		if (reverseX == 0) {
-			return 90;
+		double normalizedX = -(getWidth() - x);
+		double normalizedY = getHeight() - y;
+		if (normalizedX == 0) {
+			return 90F;
 		}
-		double rad = Math.atan(reverseY / reverseX);
-		float degree = (float) (rad * (180 / Math.PI));
-		//Log.w(TAG_ANGLE, "calculateAngleDegree: " + degree);
-		return degree;
+		double rad = Math.atan(normalizedY / normalizedX);
+		return (float) (rad * (180 / Math.PI));
+	}
+
+	private float calculateDeltaRotationArc(float startDegree, float endDegree) {
+		float normalizedStartArc = (startDegree < 0) ? (-1 * startDegree) : (180 - startDegree);
+		float normalizedEndArc = (endDegree < 0) ? (-1 * endDegree) : (180 - endDegree);
+		return normalizedEndArc - normalizedStartArc;
 	}
 
 
@@ -211,15 +205,14 @@ public class FanView extends FrameLayout {
 			Log.w(TAG, String.format("GestureDetector.onScroll: (%d/%d) - (%d/%d) - distanceX:%d - distanceY:%d",
 					(int) e1.getX(), (int) e1.getY(), (int) e2.getX(), (int) e2.getY(), (int) distanceX, (int) distanceY));
 			// calculate angle degree
-			float last = calculateAngleDegree(mLastX, mLastY);
-			float now = calculateAngleDegree(e2.getX(), e2.getY());
-			float deltaDegree = last - now;
-			Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
+			float lastDegree = calculateAngleDegree(mLastX, mLastY);
+			float nowDegree = calculateAngleDegree(e2.getX(), e2.getY());
+			float deltaArc = calculateDeltaRotationArc(lastDegree, nowDegree);
 			mCurrentDirection = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
 			mLastX = e2.getX();
 			mLastY = e2.getY();
 			// resolve items
-			resolveAngleForItems(deltaDegree * -1, mCurrentDirection);
+			resolveAngleForItems(deltaArc, mCurrentDirection);
 			renderItems();
 			return false;
 		}
@@ -251,15 +244,15 @@ public class FanView extends FrameLayout {
 		public void onAnimationUpdate(ValueAnimator animation) {
 			if (mFlingScroller.computeScrollOffset()) {
 				// calculate angle degree
-				float last = calculateAngleDegree(mLastX, mLastY);
-				float now = calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
-				float deltaDegree = last - now;
+				float lastDegree = calculateAngleDegree(mLastX, mLastY);
+				float nowDegree = calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
+				float deltaArc = calculateDeltaRotationArc(lastDegree, nowDegree);
 				mLastX = mFlingScroller.getCurrX();
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
-				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - Angle:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaDegree));
-				Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
-				resolveAngleForItems(deltaDegree * -2, mCurrentDirection);
+				//Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - Angle:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaDegree));
+				//Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
+				resolveAngleForItems(deltaArc, mCurrentDirection);
 				renderItems();
 			}
 		}
