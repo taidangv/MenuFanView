@@ -40,7 +40,7 @@ public class FanView extends FrameLayout {
 	private static final String TAG_DEV = "Dev";
 
 	private static final float ITEM_ANGLE = 12;
-	private static final float MASTER_ANGLE_MAX = 180F;
+	private static final float MASTER_ANGLE_MAX = 90F;
 	private static final float MASTER_ANGLE_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
