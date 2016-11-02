@@ -176,17 +176,17 @@ public class FanView extends FrameLayout {
 		double rad = Math.atan(normalizedY / normalizedX);
 		float degree = (float) (rad * (180 / Math.PI));
 
-		float result;
+		float degreeIn360;
 		if ((normalizedX < 0f && normalizedY < 0f)
 				|| (normalizedX < 0f && normalizedY > 0f)) {
-			result = 180 + degree;
+			degreeIn360 = 180 + degree;
 		} else {
-			result = degree;
+			degreeIn360 = degree;
 		}
-		return result;
+		return degreeIn360;
 	}
 
-	private float calculateDeltaRotationArc(float startDegree, float endDegree) {
+	private float calculateDeltaRotation(float startDegree, float endDegree) {
 		float normalizedStartArc = 180 - startDegree;
 		float normalizedEndArc = 180 - endDegree;
 		return normalizedEndArc - normalizedStartArc;
@@ -211,7 +211,7 @@ public class FanView extends FrameLayout {
 			// calculate angle degree
 			float lastDegree = calculateAngleDegree(mLastX, mLastY);
 			float nowDegree = calculateAngleDegree(e2.getX(), e2.getY());
-			float deltaArc = calculateDeltaRotationArc(lastDegree, nowDegree);
+			float deltaArc = calculateDeltaRotation(lastDegree, nowDegree);
 			mLastX = e2.getX();
 			mLastY = e2.getY();
 			// resolve items
@@ -249,7 +249,7 @@ public class FanView extends FrameLayout {
 				// calculate angle degree
 				float lastDegree = calculateAngleDegree(mLastX, mLastY);
 				float nowDegree = calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
-				float deltaArc = calculateDeltaRotationArc(lastDegree, nowDegree);
+				float deltaArc = calculateDeltaRotation(lastDegree, nowDegree);
 				mLastX = mFlingScroller.getCurrX();
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
