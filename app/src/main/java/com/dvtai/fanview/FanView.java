@@ -182,12 +182,11 @@ public class FanView extends FrameLayout {
 		float degree = (float) (rad * (180 / Math.PI));
 
 		float result;
-		if (normalizedX < 0f && normalizedY < 0f) {
-			result= 180 + degree;
-		} else if (normalizedX < 0f && normalizedY > 0f) {
+		if ((normalizedX < 0f && normalizedY < 0f)
+				|| (normalizedX < 0f && normalizedY > 0f)) {
 			result = 180 + degree;
 		} else {
-			result= degree;
+			result = degree;
 		}
 		return result;
 	}
