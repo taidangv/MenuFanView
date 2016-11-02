@@ -25,12 +25,6 @@ import java.util.List;
 
 public class FanView extends FrameLayout {
 
-	private enum Direction {
-		OPEN,
-		CLOSE,
-		UNSPECIFIED
-	}
-
 	private static class Angle {
 		float degree;
 		float maxSelf;
@@ -45,11 +39,11 @@ public class FanView extends FrameLayout {
 	}
 
 	private static final String TAG = "FanView";
-	private static final String TAG_DEV = "TDDev";
+	private static final String TAG_DEV = "Dev";
 
 	private static final int ITEM_COUNT = 20;
 	private static final float ITEM_ANGLE = 12;
-	private static final float MASTER_ANGLE_MAX = 90F;
+	private static final float MASTER_ANGLE_MAX = 180F;
 	private static final float MASTER_ANGLE_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
@@ -62,7 +56,6 @@ public class FanView extends FrameLayout {
 	private Scroller mFlingScroller;
 	private ValueAnimator mFlingAnimator;
 
-	private Direction mCurrentDirection = Direction.UNSPECIFIED;
 	private float mLastX;
 	private float mLastY;
 
@@ -109,6 +102,7 @@ public class FanView extends FrameLayout {
 			lp.gravity = Gravity.RIGHT | Gravity.BOTTOM;
 			lp.width = mItemWidth;
 			lp.height = mItemHeight;
+			lp.rightMargin = 80;
 			itemView.setLayoutParams(lp);
 			// set pivot
 			itemView.setPivotX(mItemWidth - (float) mItemHeight / 2);
@@ -139,16 +133,17 @@ public class FanView extends FrameLayout {
 		}
 	}
 
-	private void resolveAngleForItems(float deltaAngle, Direction direction) {
+	private void resolveAngleForItems(float deltaDegree) {
 		int size = mListAngle.size();
-		if (direction == Direction.OPEN) {
+		boolean isOpening = deltaDegree > 0;
+		if (isOpening) {
 			for (int i = size - 1; i >= 1; i--) {
 				Angle me = mListAngle.get(i);
 				Angle prev = (i <= size - 2) ? mListAngle.get(i + 1) : null;
 
 				if (me.isMax()) continue;
 				if (prev == null || prev.isMax()) {
-					me.degree = Math.min(me.maxSelf, me.degree + deltaAngle);
+					me.degree = Math.min(me.maxSelf, me.degree + deltaDegree);
 				} else if (!prev.isMax() && prev.degree > ITEM_ANGLE) {
 					me.degree = prev.degree - ITEM_ANGLE;
 				} else {
@@ -162,7 +157,7 @@ public class FanView extends FrameLayout {
 
 				if (me.isMin()) continue;
 				if (me.degree < MASTER_ANGLE_MAX) {
-					me.degree = Math.max(MASTER_ANGLE_MIN, me.degree + deltaAngle);
+					me.degree = Math.max(MASTER_ANGLE_MIN, me.degree + deltaDegree);
 				} else if (prev.degree + ITEM_ANGLE < MASTER_ANGLE_MAX) {
 					me.degree = prev.degree + ITEM_ANGLE;
 				} else {
@@ -217,11 +212,10 @@ public class FanView extends FrameLayout {
 			float lastDegree = calculateAngleDegree(mLastX, mLastY);
 			float nowDegree = calculateAngleDegree(e2.getX(), e2.getY());
 			float deltaArc = calculateDeltaRotationArc(lastDegree, nowDegree);
-			mCurrentDirection = distanceY > 0 ? Direction.OPEN : Direction.CLOSE;
 			mLastX = e2.getX();
 			mLastY = e2.getY();
 			// resolve items
-			resolveAngleForItems(deltaArc, mCurrentDirection);
+			resolveAngleForItems(deltaArc);
 			renderItems();
 			return false;
 		}
@@ -260,7 +254,7 @@ public class FanView extends FrameLayout {
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
 				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - lastDegree:%f nowDegree:%f - deltaArc:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), lastDegree, nowDegree, (int) deltaArc));
-				resolveAngleForItems(deltaArc, mCurrentDirection);
+				resolveAngleForItems(deltaArc);
 				renderItems();
 			}
 		}
