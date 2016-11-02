@@ -251,11 +251,14 @@ public class FanView extends FrameLayout {
 		public void onAnimationUpdate(ValueAnimator animation) {
 			if (mFlingScroller.computeScrollOffset()) {
 				// calculate angle degree
-				float deltaDegree = calculateAngleDegree(mLastX, mLastY) - calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
+				float last = calculateAngleDegree(mLastX, mLastY);
+				float now = calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
+				float deltaDegree = last - now;
 				mLastX = mFlingScroller.getCurrX();
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
 				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - Angle:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), (int) deltaDegree));
+				Log.w(TAG_ANGLE, String.format("scroll: last:%d now:%d delta:%d", (int) last, (int) now, (int) deltaDegree));
 				resolveAngleForItems(deltaDegree * -2, mCurrentDirection);
 				renderItems();
 			}
