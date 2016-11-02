@@ -179,13 +179,22 @@ public class FanView extends FrameLayout {
 			return 90F;
 		}
 		double rad = Math.atan(normalizedY / normalizedX);
-		return (float) (rad * (180 / Math.PI));
+		float degree = (float) (rad * (180 / Math.PI));
+
+		float result;
+		if (normalizedX < 0f && normalizedY < 0f) {
+			result= 180 + degree;
+		} else if (normalizedX < 0f && normalizedY > 0f) {
+			result = 180 + degree;
+		} else {
+			result= degree;
+		}
+		return result;
 	}
 
 	private float calculateDeltaRotationArc(float startDegree, float endDegree) {
-		float normalizedStartArc = (startDegree < 0f) ? (-1f * startDegree) : (180f - startDegree);
-		float normalizedEndArc = (endDegree < 0f) ? (-1f * endDegree) : (180f - endDegree);
-		Log.w(TAG_DEV, String.format("startDegree:%f endDegree:%f deltaArc:%f", startDegree, endDegree, normalizedEndArc - normalizedStartArc));
+		float normalizedStartArc = 180 - startDegree;
+		float normalizedEndArc = 180 - endDegree;
 		return normalizedEndArc - normalizedStartArc;
 	}
 
