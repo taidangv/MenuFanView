@@ -43,7 +43,7 @@ public class FanView extends ViewGroup {
 	private static final String TAG = "FanView";
 	private static final String TAG_DEV = "TAG_DEV";
 
-	private static final float ITEM_ANGLE = 12;
+	private static final float ITEM_ANGLE = 13;
 
 	// currently, support 0 <= angle <= 180
 	private static final float MASTER_ANGLE_MAX = 90F;

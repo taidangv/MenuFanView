@@ -27,8 +27,8 @@ public class MainActivity extends AppCompatActivity {
 
 	public void setAdapter(View view) {
 		List<String> menuTitles = new ArrayList<>();
-		for (int i = 0; i < 10; i++) {
-			menuTitles.add((i + 1) + " bla bla bla !!!");
+		for (int i = 0; i < 17; i++) {
+			menuTitles.add("Item title " + (i + 1));
 		}
 		MenuAdapter adapter = new MenuAdapter(this, menuTitles);
 		fanView.setAdapter(adapter);
