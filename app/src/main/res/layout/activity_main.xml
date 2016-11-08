@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,11 +8,30 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.dvtai.fanview.MainActivity">
+    tools:context="com.dvtai.fanview.MainActivity"
+    android:orientation="vertical">
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="setAdapter"
+        android:text="setAdapter"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onOpenMenu"
+        android:text="open"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onCloseMenu"
+        android:text="close"/>
 
     <com.dvtai.fanview.FanView
         android:id="@+id/fv_menu"
         android:layout_width="@dimen/fan_menu_size"
         android:layout_height="@dimen/fan_menu_size"
         android:background="#DDDDDD"/>
-</FrameLayout>
+</LinearLayout>

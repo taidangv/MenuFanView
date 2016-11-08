@@ -3,6 +3,7 @@ package com.dvtai.fanview;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,32 +16,41 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+	private FanView fanView;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		fanView = (FanView) findViewById(R.id.fv_menu);
+	}
 
-		FanView fanView = (FanView) findViewById(R.id.fv_menu);
-
-
+	public void setAdapter(View view) {
 		List<String> menuTitles = new ArrayList<>();
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 10; i++) {
 			menuTitles.add((i + 1) + " bla bla bla !!!");
 		}
 		MenuAdapter adapter = new MenuAdapter(this, menuTitles);
 		fanView.setAdapter(adapter);
+		Log.w("TAG_DEV", "onCreate: set adapter");
+	}
+
+	public void onOpenMenu(View view) {
+		fanView.createOpenMenuAnimator().start();
+	}
+
+	public void onCloseMenu(View view) {
+		fanView.createCloseMenuAnimator().start();
 	}
 
 
 	static class MenuAdapter extends BaseAdapter {
 
 		private List<String> menuTitles = new ArrayList<>();
-		private Context context;
 		private LayoutInflater layoutInflater;
 
 		public MenuAdapter(Context context, List<String> menuTitles) {
 			this.menuTitles = menuTitles;
-			this.context = context;
 			this.layoutInflater = LayoutInflater.from(context);
 		}
 
@@ -51,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
 		@Override
 		public String getItem(int position) {
-			return menuTitles.get(position); //no.op
+			return menuTitles.get(position);
 		}
 
 		@Override

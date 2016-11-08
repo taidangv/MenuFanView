@@ -4,19 +4,30 @@
               android:layout_height="wrap_content"
               android:background="@drawable/bg"
               android:gravity="center_vertical"
-              android:orientation="horizontal"
+              android:orientation="vertical"
               android:padding="5dp">
 
-    <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginRight="5dp"
-        android:src="@drawable/icon"/>
+    <!--<ImageView-->
+        <!--android:layout_width="30dp"-->
+        <!--android:layout_height="30dp"-->
+        <!--android:layout_marginRight="5dp"-->
+        <!--android:src="@drawable/icon"/>-->
 
     <TextView
         android:id="@+id/tv_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:layout_marginLeft="20dp"
         android:textSize="15dp"/>
+
+    <TextView
+        android:id="@+id/tv_name_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:layout_marginLeft="20dp"
+        android:textSize="15dp"
+        android:text="Sub title"/>
 
 </LinearLayout>

@@ -6,13 +6,13 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.widget.Adapter;
-import android.widget.FrameLayout;
 import android.widget.Scroller;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import java.util.List;
  * Created by taidangvan on 10/31/16.
  */
 
-public class FanView extends FrameLayout {
+public class FanView extends ViewGroup {
 
 	private float mLastXIntercept;
 	private float mLastYIntercept;
@@ -41,18 +41,16 @@ public class FanView extends FrameLayout {
 	}
 
 	private static final String TAG = "FanView";
-	private static final String TAG_DEV = "Dev";
+	private static final String TAG_DEV = "TAG_DEV";
 
 	private static final float ITEM_ANGLE = 12;
 
 	// currently, support 0 <= angle <= 180
-	private static final float MASTER_ANGLE_MAX = 180F;
+	private static final float MASTER_ANGLE_MAX = 90F;
 	private static final float MASTER_ANGLE_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
 	private List<Angle> mListAngle;
-	private int mItemWidth = getResources().getDimensionPixelSize(R.dimen.fan_menu_size);
-	private int mItemHeight = getResources().getDimensionPixelSize(R.dimen.fan_menu_item_height);
 
 	private GestureDetectorCompat mGestureDetector;
 	private Scroller mFlingScroller;
@@ -82,7 +80,35 @@ public class FanView extends FrameLayout {
 		mFlingScroller = new Scroller(getContext());
 		mFlingAnimator = new ValueAnimator();
 		mFlingAnimator.addUpdateListener(flingAnimatorUpdateListener);
-		addItems();
+		clearAll();
+	}
+
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		// resolve item view size
+		if (mListItem == null || mListItem.isEmpty()) return;
+		for (View item : mListItem) {
+			item.measure(widthMeasureSpec, MeasureSpec.UNSPECIFIED);
+		}
+		// resolve item pivot
+		for (View item : mListItem) {
+			item.setPivotX(item.getMeasuredWidth() - (item.getMeasuredHeight() / 2));
+			item.setPivotY(item.getMeasuredHeight() / 2);
+		}
+	}
+
+	@Override
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+		// lay items out
+		if (mListItem == null || mListItem.isEmpty()) return;
+		for (View item : mListItem) {
+			item.layout(getPaddingLeft(),
+					getMeasuredHeight() - item.getMeasuredHeight(),
+					getMeasuredWidth() - getPaddingRight(),
+					getMeasuredHeight());
+			Log.w(TAG_DEV, String.format("resolveItemsLayoutPosition: %d %d %d %d", item.getLeft(), item.getTop(), item.getRight(), item.getBottom()));
+		}
 	}
 
 	@Override
@@ -124,42 +150,42 @@ public class FanView extends FrameLayout {
 		return mGestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
 	}
 
-	private void addItems() {
-		removeAllViews();
-		setAdapter(null);
-	}
-
 	public void setAdapter(Adapter adapter) {
+		clearAll();
 		mAdapter = adapter;
 		populateItems();
 		prepareAngles();
 		renderItems();
 	}
 
-	public void populateItems() {
+	private void clearAll() {
 		removeAllViews();
-		if (mAdapter == null) return;
+		mListItem = new ArrayList<>();
+		mListAngle = new ArrayList<>();
+	}
 
+	private void populateItems() {
+		if (mAdapter == null) return;
 		int count = mAdapter.getCount();
 		for (int i = 0; i < count; i++) {
-			View itemView = mAdapter.getView(i, null, this);
-			LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-			lp.gravity = Gravity.RIGHT | Gravity.BOTTOM;
-			lp.width = mItemWidth;
-			lp.height = mItemHeight;
-			itemView.setLayoutParams(lp);
+			View child = mAdapter.getView(i, null, this);
+			createItemViewLayoutParams(child);
+			addView(child, 0);
+			mListItem.add(child);
+		}
+		requestLayout();
+	}
 
-			// set pivot
-			itemView.setPivotX(mItemWidth - (float) mItemHeight / 2);
-			itemView.setPivotY((float) mItemHeight / 2);
-
-			mListItem.add(itemView);
-			addView(itemView, 0);
+	private void createItemViewLayoutParams(View child) {
+		if (child == null) return;
+		ViewGroup.LayoutParams lp = child.getLayoutParams();
+		if (lp == null) {
+			lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+			child.setLayoutParams(lp);
 		}
 	}
 
 	private void prepareAngles() {
-		mListAngle = new ArrayList<>();
 		if (mAdapter == null) return;
 		for (int i = 0; i < mAdapter.getCount(); i++) {
 			Angle angle = new Angle();
