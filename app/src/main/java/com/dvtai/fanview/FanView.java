@@ -1,15 +1,16 @@
 package com.dvtai.fanview;
 
+import android.animation.Animator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.Adapter;
 import android.widget.FrameLayout;
 import android.widget.Scroller;
@@ -22,6 +23,9 @@ import java.util.List;
  */
 
 public class FanView extends FrameLayout {
+
+	private float mLastXIntercept;
+	private float mLastYIntercept;
 
 	private static class Angle {
 		float degree;
@@ -40,7 +44,9 @@ public class FanView extends FrameLayout {
 	private static final String TAG_DEV = "Dev";
 
 	private static final float ITEM_ANGLE = 12;
-	private static final float MASTER_ANGLE_MAX = 90F;
+
+	// currently, support 0 <= angle <= 180
+	private static final float MASTER_ANGLE_MAX = 180F;
 	private static final float MASTER_ANGLE_MIN = 0F;
 
 	private List<View> mListItem = new ArrayList<>();
@@ -55,6 +61,8 @@ public class FanView extends FrameLayout {
 
 	private float mLastX;
 	private float mLastY;
+
+	private boolean mIsScrolling;
 
 	public FanView(Context context) {
 		this(context, null);
@@ -78,8 +86,42 @@ public class FanView extends FrameLayout {
 	}
 
 	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev) {
+		switch (ev.getAction()) {
+			case MotionEvent.ACTION_UP:
+			case MotionEvent.ACTION_CANCEL:
+				mIsScrolling = false;
+				break;
+			case MotionEvent.ACTION_DOWN:
+				if (mFlingAnimator.isRunning()) mFlingAnimator.cancel();
+				mLastXIntercept = ev.getX();
+				mLastYIntercept = ev.getY();
+				mLastX = ev.getX();
+				mLastY = ev.getY();
+				mIsScrolling = false;
+				break;
+			case MotionEvent.ACTION_MOVE:
+				if (mIsScrolling) {
+					return true;
+				}
+
+				float xDiff = (ev.getX() - mLastXIntercept);
+				float yDiff = (ev.getY() - mLastYIntercept);
+
+				int diff = (int) Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+				if (diff > ViewConfiguration.get(getContext()).getScaledTouchSlop()) {
+					mIsScrolling = true;
+					return true;
+				}
+				break;
+		}
+		return false;
+	}
+
+	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		return mGestureDetector.onTouchEvent(event);
+		return mGestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
 	}
 
 	private void addItems() {
@@ -197,8 +239,13 @@ public class FanView extends FrameLayout {
 	private GestureDetector.OnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
 
 		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			performClick();
+			return true;
+		}
+
+		@Override
 		public boolean onDown(MotionEvent e) {
-			Log.w(TAG, String.format("GestureDetector.onDown: X:%d Y:%d", (int) e.getX(), (int) e.getY()));
 			if (mFlingAnimator.isRunning()) mFlingAnimator.cancel();
 			mLastX = e.getX();
 			mLastY = e.getY();
@@ -207,8 +254,6 @@ public class FanView extends FrameLayout {
 
 		@Override
 		public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-			Log.w(TAG, String.format("GestureDetector.onScroll: (%d/%d) - (%d/%d) - distanceX:%d - distanceY:%d",
-					(int) e1.getX(), (int) e1.getY(), (int) e2.getX(), (int) e2.getY(), (int) distanceX, (int) distanceY));
 			// calculate angle degree
 			float lastDegree = calculateAngleDegree(mLastX, mLastY);
 			float nowDegree = calculateAngleDegree(e2.getX(), e2.getY());
@@ -224,7 +269,7 @@ public class FanView extends FrameLayout {
 		@Override
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 			// scroller
-			mFlingScroller.fling((int) e1.getX(), (int) e1.getY(), (int) velocityX, (int) velocityY,
+			mFlingScroller.fling((int) mLastXIntercept, (int) mLastYIntercept, (int) velocityX, (int) velocityY,
 					Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 			mLastX = mFlingScroller.getStartX();
 			mLastY = mFlingScroller.getStartY();
@@ -247,6 +292,10 @@ public class FanView extends FrameLayout {
 		@Override
 		public void onAnimationUpdate(ValueAnimator animation) {
 			if (mFlingScroller.computeScrollOffset()) {
+				if (mFlingScroller.getCurrX() > getWidth() && mFlingScroller.getCurrY() > getHeight()) {
+					mFlingAnimator.cancel();
+					return;
+				}
 				// calculate angle degree
 				float lastDegree = calculateAngleDegree(mLastX, mLastY);
 				float nowDegree = calculateAngleDegree(mFlingScroller.getCurrX(), mFlingScroller.getCurrY());
@@ -254,10 +303,56 @@ public class FanView extends FrameLayout {
 				mLastX = mFlingScroller.getCurrX();
 				mLastY = mFlingScroller.getCurrY();
 				// resolve items
-				Log.w(TAG, String.format("ValueAnimator.fling: X:%d, Y:%d - lastDegree:%f nowDegree:%f - deltaArc:%d", mFlingScroller.getCurrX(), mFlingScroller.getCurrY(), lastDegree, nowDegree, (int) deltaArc));
 				resolveAngleForItems(deltaArc);
 				renderItems();
 			}
 		}
 	};
+
+	private static final int TOGGLE_MENU_ANIMATION_DURATION = 150;
+
+	public Animator createOpenMenuAnimator() {
+		ValueAnimator anim = ValueAnimator.ofFloat(MASTER_ANGLE_MIN, MASTER_ANGLE_MAX);
+		anim.setDuration(TOGGLE_MENU_ANIMATION_DURATION);
+		anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+			private float last = -1;
+
+			@Override
+			public void onAnimationUpdate(ValueAnimator valueAnimator) {
+				float now = (float) valueAnimator.getAnimatedValue();
+				if (last > -1) {
+					resolveAngleForItems(now - last);
+					renderItems();
+				}
+				last = now;
+			}
+		});
+		return anim;
+	}
+
+	public Animator createCloseMenuAnimator() {
+		float maxCurrentRotation = MASTER_ANGLE_MAX;
+		for (Angle angle : mListAngle) {
+			if (angle.degree >= MASTER_ANGLE_MAX) maxCurrentRotation += ITEM_ANGLE;
+		}
+
+		ValueAnimator anim = ValueAnimator.ofFloat(maxCurrentRotation, MASTER_ANGLE_MIN);
+		anim.setDuration(TOGGLE_MENU_ANIMATION_DURATION);
+		anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+			private float last = -1;
+
+			@Override
+			public void onAnimationUpdate(ValueAnimator valueAnimator) {
+				float now = (float) valueAnimator.getAnimatedValue();
+				if (last > -1) {
+					resolveAngleForItems(now - last);
+					renderItems();
+				}
+				last = now;
+			}
+		});
+		return anim;
+	}
 }

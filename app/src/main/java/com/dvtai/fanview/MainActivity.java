@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
 
 		List<String> menuTitles = new ArrayList<>();
 		for (int i = 0; i < 50; i++) {
-			menuTitles.add((i + 1) + " shit shit shit !!!");
+			menuTitles.add((i + 1) + " bla bla bla !!!");
 		}
 		MenuAdapter adapter = new MenuAdapter(this, menuTitles);
 		fanView.setAdapter(adapter);
@@ -49,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		@Override
-		public Object getItem(int position) {
-			return null; //no.op
+		public String getItem(int position) {
+			return menuTitles.get(position); //no.op
 		}
 
 		@Override
@@ -59,8 +60,14 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
+		public View getView(final int position, View convertView, ViewGroup parent) {
 			ViewGroup itemView = (ViewGroup) layoutInflater.inflate(R.layout.item_fan, null);
+			itemView.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Toast.makeText(v.getContext(), getItem(position), Toast.LENGTH_SHORT).show();
+				}
+			});
 			TextView tv = (TextView) itemView.findViewById(R.id.tv_name);
 			tv.setText(menuTitles.get(position));
 			return itemView;
