@@ -31,7 +31,7 @@
 
     <com.dvtai.fanview.FanView
         android:id="@+id/fv_menu"
-        android:layout_width="@dimen/fan_menu_size"
-        android:layout_height="@dimen/fan_menu_size"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="#DDDDDD"/>
 </LinearLayout>

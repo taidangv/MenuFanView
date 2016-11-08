@@ -85,7 +85,7 @@ public class FanView extends ViewGroup {
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		super.onMeasure(widthMeasureSpec, widthMeasureSpec);
 		// resolve item view size
 		if (mListItem == null || mListItem.isEmpty()) return;
 		for (View item : mListItem) {
